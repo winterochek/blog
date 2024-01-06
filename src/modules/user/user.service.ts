@@ -84,28 +84,38 @@ export class UserService {
       if (user.id !== userId) {
         throw new BusinessException(ErrorCode.DONT_HAVE_PERMISSION);
       }
-      const isPasswordBeingUpdated = Boolean(body?.password);
-      const passwordHash: string | null = isPasswordBeingUpdated
-        ? await hash(body.password, 10)
-        : null;
-
-      const isEmailBeingUpdated = Boolean(body?.email);
-      if (isEmailBeingUpdated) {
-        const token = this.tokenService.create();
-        await this.emailVerifyTokenRepository.save({ userId, token });
+      let existingUser = await this.userRepository.findOne({
+        where: { email: body.email },
+      });
+      if (existingUser) {
+        throw new BusinessException(ErrorCode.EMAIL_ALREADY_TAKEN);
+      }
+      existingUser = await this.userRepository.findOne({
+        where: { username: body.username },
+      });
+      if (existingUser) {
+        throw new BusinessException(ErrorCode.USERNAME_ALREADY_TAKEN);
       }
 
       const partialUserEntity: Partial<User> = {
         ...user,
-        ...body,
+        ...body.excludeSensitiveFields(),
       };
 
+      const isPasswordBeingUpdated = Boolean(body?.password);
       if (isPasswordBeingUpdated) {
+        const passwordHash: string | null = isPasswordBeingUpdated
+          ? await hash(body.password, 10)
+          : null;
         partialUserEntity['password'] = passwordHash;
       }
 
+      const isEmailBeingUpdated = Boolean(body?.email);
       if (isEmailBeingUpdated) {
+        const token = this.tokenService.create();
+        partialUserEntity.emailVerified = false;
         partialUserEntity['email'] = body.email;
+        await this.emailVerifyTokenRepository.save({ userId, token });
       }
 
       return await this.userRepository.save(partialUserEntity);

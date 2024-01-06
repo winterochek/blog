@@ -3,20 +3,27 @@ import { IsEmail, IsOptional, IsString, Length } from 'class-validator';
 export class UpdateUserRequestBody {
   @IsOptional()
   @IsEmail()
-  email: string;
+  public email: string;
 
   @IsOptional()
   @IsString()
   @Length(4, 255)
-  name: string;
+  public name: string;
 
   @IsOptional()
   @IsString()
   @Length(4, 20)
-  username: string;
+  public username: string;
 
   @IsOptional()
   @IsString()
   @Length(8, 21)
-  password: string;
+  public password: string;
+
+  excludeSensitiveFields(): Partial<UpdateUserRequestBody> {
+    return {
+      name: this.name,
+      username: this.username,
+    };
+  }
 }
