@@ -17,7 +17,7 @@ export class EmailVerifyToken {
   @Column({ type: 'int', name: 'user_id', nullable: false })
   userId: number;
 
-  @Column({ type: 'varchar', name: 'title', nullable: false })
+  @Column({ type: 'varchar', name: 'token', nullable: false })
   token: string;
 
   @Column({ type: 'boolean', name: 'expired', default: false })
